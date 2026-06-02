@@ -1,0 +1,10 @@
+
+# Data files
+*.csv
+data/
+
+# Python cache
+__pycache__/
+
+# Virtual env
+venv/
