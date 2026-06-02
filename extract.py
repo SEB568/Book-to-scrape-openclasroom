@@ -1,20 +1,16 @@
 import requests
 from bs4 import BeautifulSoup
-import csv
 
 
-def extract_and_save():
+BASE_URL = "https://books.toscrape.com/"
 
-    print("Scraping started...")
 
-    # Product page URL
-    url = "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html"
-
+def extract_book_data(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
 
-    # Extract data
     product_page_url = url
+
     upc = soup.find("th", string="UPC").find_next("td").text
     title = soup.find("h1").text
 
@@ -30,43 +26,33 @@ def extract_and_save():
 
     review_rating = soup.find("p", class_="star-rating")["class"][1]
 
-    image_url = "https://books.toscrape.com/" + soup.find("img")["src"].replace("../../", "")
+    image_url = BASE_URL + soup.find("img")["src"].replace("../../", "")
 
-    # Create CSV file
-    with open("book.csv", "w", newline="", encoding="utf-8") as file:
-
-        writer = csv.writer(file)
-
-        # Headers
-        writer.writerow([
-            "product_page_url",
-            "universal_product_code",
-            "title",
-            "price_including_tax",
-            "price_excluding_tax",
-            "number_available",
-            "product_description",
-            "category",
-            "review_rating",
-            "image_url"
-        ])
-
-        # Data row
-        writer.writerow([
-            product_page_url,
-            upc,
-            title,
-            price_including_tax,
-            price_excluding_tax,
-            number_available,
-            product_description,
-            category,
-            review_rating,
-            image_url
-        ])
-
-    print("CSV created successfully!")
+    return [
+        product_page_url,
+        upc,
+        title,
+        price_including_tax,
+        price_excluding_tax,
+        number_available,
+        product_description,
+        category,
+        review_rating,
+        image_url
+    ]
 
 
-# RUN SCRIPT
-extract_and_save()
+def get_books_urls(category_url):
+    response = requests.get(category_url)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    books = soup.select("article.product_pod h3 a")
+
+    urls = []
+
+    for book in books:
+        relative_url = book["href"].replace("../../../", "")
+        full_url = BASE_URL + "catalogue/" + relative_url
+        urls.append(full_url)
+
+    return urls
