@@ -10,7 +10,6 @@ def download_image(image_url, category, title):
     folder = f"data/images/{category}"
     os.makedirs(folder, exist_ok=True)
 
-    # clean filename (Windows safe)
     filename = (
         title
         .replace(":", "")
@@ -57,7 +56,6 @@ def extract_book_data(url):
 
     image_url = BASE_URL + soup.find("img")["src"].replace("../../", "")
 
-    # download image (ADDED FEATURE)
     download_image(image_url, category, title)
 
     return [
