@@ -1,6 +1,15 @@
+#EXTRACT MODULE
+
+This module contains all web scraping functions:
+- extract book data from a single book page
+- retrieve all book URLs from a category (with pagination)
+- retrieve all categories from the website #
+
+
+
 import requests
 from bs4 import BeautifulSoup
-
+from urllib.parse import urljoin
 
 BASE_URL = "https://books.toscrape.com/"
 
@@ -41,18 +50,62 @@ def extract_book_data(url):
         image_url
     ]
 
+#   Retrieves all book URLs from a category page,
+    including pagination handling.
+
+    Args:
+        category_url (str): URL of the category page
+
+    Returns:
+        list: List of all book URLs in the category#
 
 def get_books_urls(category_url):
-    response = requests.get(category_url)
-    soup = BeautifulSoup(response.text, "html.parser")
-
-    books = soup.select("article.product_pod h3 a")
 
     urls = []
+    next_page = category_url
 
-    for book in books:
-        relative_url = book["href"].replace("../../../", "")
-        full_url = BASE_URL + "catalogue/" + relative_url
-        urls.append(full_url)
+    while next_page:
+
+        response = requests.get(next_page)
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        books = soup.select("article.product_pod h3 a")
+
+        for book in books:
+            relative_url = book["href"].replace("../../../", "")
+            full_url = BASE_URL + "catalogue/" + relative_url
+            urls.append(full_url)
+
+        next_btn = soup.select_one("li.next a")
+
+        if next_btn:
+            next_page = urljoin(next_page, next_btn["href"])
+        else:
+            next_page = None
 
     return urls
+
+    #    Retrieves all categories from the website.
+
+    Returns:
+        dict: Dictionary where:
+            - key = category name
+            - value = category URL#
+
+def get_categories_urls():
+
+    base_url = BASE_URL
+
+    response = requests.get(base_url)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    categories = {}
+
+    category_links = soup.select(".side_categories ul li ul li a")
+
+    for link in category_links:
+        name = link.text.strip()
+        url = urljoin(base_url, link["href"])
+        categories[name] = url
+
+    return categories

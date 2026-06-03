@@ -1,23 +1,28 @@
-from extract import extract_book_data, get_books_urls
+from extract import extract_book_data, get_books_urls, get_categories_urls
 from transform import transform_data
 from load import load_data
 
 
 def main():
 
-    category_url = "https://books.toscrape.com/catalogue/category/books/travel_2/index.html"
+    categories = get_categories_urls()
 
-    book_urls = get_books_urls(category_url)
+    for category_name, category_url in categories.items():
 
-    books = []
+        print(f"Scraping: {category_name}")
 
-    for url in book_urls:
-        books.append(extract_book_data(url))
+        book_urls = get_books_urls(category_url)
 
-    books = transform_data(books)
-    load_data(books)
+        books = []
 
-    print("Done")
+        for url in book_urls:
+            books.append(extract_book_data(url))
+
+        books = transform_data(books)
+
+        load_data(books, category_name)
+
+        print(f"Done: {category_name}")
 
 
 if __name__ == "__main__":

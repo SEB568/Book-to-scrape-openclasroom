@@ -2,12 +2,12 @@ import csv
 import os
 
 
-def load_data(books):
+def load_data(books, category_name):
 
     if not os.path.exists("data"):
         os.mkdir("data")
 
-    file_path = "data/books.csv"
+    file_path = f"data/{category_name}.csv"
 
     with open(file_path, "w", newline="", encoding="utf-8") as file:
 
@@ -26,5 +26,4 @@ def load_data(books):
             "image_url"
         ])
 
-        for book in books:
-            writer.writerow(book)
+        writer.writerows(books)
