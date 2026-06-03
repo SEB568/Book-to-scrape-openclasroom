@@ -1,20 +1,40 @@
-#EXTRACT MODULE
-
-This module contains all web scraping functions:
-- extract book data from a single book page
-- retrieve all book URLs from a category (with pagination)
-- retrieve all categories from the website #
-
-
-
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+import os
 
 BASE_URL = "https://books.toscrape.com/"
 
 
+def download_image(image_url, category, title):
+
+    folder = f"data/images/{category}"
+    os.makedirs(folder, exist_ok=True)
+
+    # clean filename (Windows safe)
+    filename = (
+        title
+        .replace(":", "")
+        .replace("/", "")
+        .replace("\\", "")
+        .replace("?", "")
+        .replace("*", "")
+        .replace("\"", "")
+        .replace("<", "")
+        .replace(">", "")
+        .replace("|", "")
+        + ".jpg"
+    )
+
+    filepath = folder + "/" + filename
+
+    img = requests.get(image_url).content
+
+    with open(filepath, "wb") as f:
+        f.write(img)
+
+
 def extract_book_data(url):
+
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
 
@@ -37,6 +57,9 @@ def extract_book_data(url):
 
     image_url = BASE_URL + soup.find("img")["src"].replace("../../", "")
 
+    # download image (ADDED FEATURE)
+    download_image(image_url, category, title)
+
     return [
         product_page_url,
         upc,
@@ -50,14 +73,6 @@ def extract_book_data(url):
         image_url
     ]
 
-#   Retrieves all book URLs from a category page,
-    including pagination handling.
-
-    Args:
-        category_url (str): URL of the category page
-
-    Returns:
-        list: List of all book URLs in the category#
 
 def get_books_urls(category_url):
 
@@ -79,24 +94,16 @@ def get_books_urls(category_url):
         next_btn = soup.select_one("li.next a")
 
         if next_btn:
-            next_page = urljoin(next_page, next_btn["href"])
+            next_page = "/".join(next_page.split("/")[:-1]) + "/" + next_btn["href"]
         else:
             next_page = None
 
     return urls
 
-    #    Retrieves all categories from the website.
-
-    Returns:
-        dict: Dictionary where:
-            - key = category name
-            - value = category URL#
 
 def get_categories_urls():
 
-    base_url = BASE_URL
-
-    response = requests.get(base_url)
+    response = requests.get(BASE_URL)
     soup = BeautifulSoup(response.text, "html.parser")
 
     categories = {}
@@ -105,7 +112,7 @@ def get_categories_urls():
 
     for link in category_links:
         name = link.text.strip()
-        url = urljoin(base_url, link["href"])
+        url = BASE_URL + link["href"]
         categories[name] = url
 
     return categories
